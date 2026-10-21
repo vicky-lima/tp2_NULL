@@ -5,6 +5,10 @@ import matplotlib.pyplot as plt
 import duckdb as dd
 import pandas as pd
 import os
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+
+SEMILLA = 21
 
 carpeta_principal = os.path.dirname(os.path.abspath(__file__))
 clases = pd.read_csv(os.path.join(carpeta_principal, "clases.csv"))
@@ -157,3 +161,48 @@ fig.suptitle("Diez imágenes de la clase 8")
 plt.tight_layout()
 plt.show()
 #%%%=================================================
+# Ejercicio 2
+
+clase2y9 = imagenes[(imagenes["label"] == 2) | (imagenes["label"] == 9)]
+
+balance_sql = """
+                SELECT label, COUNT(*) AS cantidad
+                FROM clase2y9
+                GROUP BY label
+                """
+balance_2y9 = dd.sql(balance_sql).df()
+print(balance_2y9)
+
+# clases 2 y 9 difieren de 140 imagenes, consideramos que están balanceadas
+
+#  como hay balance, usamos accuracy (2b) TP + TN  / TP + TN + FP + FN, 
+#justificar en el docs por que elegimos esa
+# positivo: clase 2 (cuadrado), negativo: clase 9 (casa)
+# creemos que es más grave FP, que diga que es un cuadrado y sea una casa
+# (que tenga un triangulo arriba del cuadrado y no lo vea), PRECISION alto
+
+#%%===================================================================
+# 2c) separar en conjunto de entrenamiento - testeo
+# para evitar que quede toda una clase en uno de los conjuntos, separamos las clases en distintos dfs
+# y sacamos cierta proporción de cada una al azar, luego unimos todo y obtenemos los conjuntos que vamos a usar
+
+datos = clase2y9.drop(columns=["label"])
+
+clases = clase2y9["label"]
+
+datos_train, datos_test, clases_train, clases_test = train_test_split(
+    
+    datos, clases, test_size = 0.2, random_state = SEMILLA, stratify = clases
+    )
+
+print(datos_train.shape)
+
+#%%===================================================================
+# 2d, elegimos k=5
+# PENDIENTE, ver los conjuntos de pixeles que elegimos
+pixeles = []
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(datos_train[pixeles], clases_train)
+predicción = knn.predict(datos_test[pixeles])
+
+

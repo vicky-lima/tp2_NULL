@@ -63,6 +63,7 @@ print(dataframe)
 #MAX = 3120(6), MIN = 2870 (5)  
 
 #%%====================================================================================================000
+#c)
 # Mapas de calor de todas las clases en una sola figura
 
 imagenes["label"] = pd.to_numeric(imagenes["label"], errors="raise")
@@ -108,6 +109,172 @@ plt.show()
 #SIMILITUDES:
 #Cuadrado=circulo~remera (vacíos en el centro)
 #Pez=colectivo (rectangulo arriba)
+#OBS: 
+    #mean(axis=0) → hace promedio de cada columna: promedio de cada píxel
+    #mean(axis=1) → hace promedio de cada fila: promedio de cada imagen
+
+#Graficamos la diferencia entre la media de los pixeles de la clase 3(pez) y 5(colectivo)
+
+pixeles_clase3 = imagenes[imagenes["label"] == 3].drop(columns=["label"])
+clase_3_media = pixeles_clase3.mean(axis=0)
+
+pixeles_clase5 = imagenes[imagenes["label"] == 5].drop(columns=["label"])
+clase_5_media = pixeles_clase5.mean(axis=0)
+
+diferencia_intensidad = (clase_3_media - clase_5_media)
+
+eje_pixeles = np.arange(1,785)
+plt.plot(eje_pixeles, diferencia_intensidad)
+plt.xlabel("Píxeles")
+plt.ylabel("Diferencia de intensidad media")
+plt.title("Diferencia de intensidad media de pixeles entre pez y colectivo")
+plt.axhline(0, color="black", linestyle="--")
+plt.show()
+
+
+#Graficamos la diferencia ahora con con un scatterplot
+eje_pixeles = np.arange(1, 785)
+
+plt.figure(figsize=(14, 5))
+
+plt.scatter(
+    eje_pixeles,
+    diferencia_intensidad,
+    s=10,
+    alpha=0.7
+)
+
+plt.axhline(0, color="black", linewidth=0.8, linestyle="--")
+plt.xlabel("Píxel")
+plt.ylabel("Diferencia de intensidad media (clase 3 - clase 5)")
+plt.title("Diferencia de intensidad media por píxel entre las clases 3 y 5")
+plt.xlim(1, 784)
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+#Graficamos cada clase con linea
+eje_pixeles = np.arange(1,785)
+plt.plot(eje_pixeles, clase_5_media, clase_3_media)
+plt.xlabel("Píxeles")
+plt.ylabel("Intensidad media")
+plt.title("Intensidad media de pixeles pez y colectivo")
+plt.axhline(0, color="black", linestyle="--")
+plt.show()
+
+#Graficamos cada clase con scatterplot
+
+#Idea: si supieramos como acceder a los pixeles que queremos podriamos hacer un grafico que en vez de poner
+#todos los pixeles en el eje x, comparemos por bloques que nos interesan
+
+eje_pixeles = np.arange(1, 785)
+
+fig, ejes = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
+
+ejes[0].scatter(
+    eje_pixeles,
+    clase_3_media,
+    s=10,
+    alpha=0.7,
+    color="blue"
+)
+ejes[0].set_title("Intensidad media por píxel - Clase 3")
+ejes[0].set_ylabel("Intensidad media")
+ejes[0].grid(True, alpha=0.3)
+
+ejes[1].scatter(
+    eje_pixeles,
+    clase_5_media,
+    s=10,
+    alpha=0.7,
+    color="red"
+)
+ejes[1].set_title("Intensidad media por píxel - Clase 5")
+ejes[1].set_xlabel("Píxel")
+ejes[1].set_ylabel("Intensidad media")
+ejes[1].grid(True, alpha=0.3)
+
+ejes[1].set_xlim(1, 784)
+
+plt.tight_layout()
+plt.show()
+
+# Graficamos cada clase con scatterplot en un mismo grafico
+plt.figure(figsize=(14,5))
+plt.scatter(
+    eje_pixeles, clase_3_media, color ="blue", label="Clase 2"
+)
+plt.scatter(
+    eje_pixeles, clase_5_media, color ="green", label="Clase 5"
+)
+
+plt.xlabel("Píxel")
+plt.ylabel("Intensidad media")
+plt.title("Intensidad media por píxel: clases 2 y 9")
+plt.xlim(1, 784)
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+#%% Hacemos graficos luego de las correcciones de Juan
+
+# Diferencia entre pez y colectivo con linea y sin negativos ordenados
+pixeles_clase3 = imagenes[imagenes["label"] == 3].drop(columns=["label"])
+clase_3_media = pixeles_clase3.mean(axis=0)
+
+pixeles_clase5 = imagenes[imagenes["label"] == 5].drop(columns=["label"])
+clase_5_media = pixeles_clase5.mean(axis=0)
+
+diferencia_intensidad = (clase_3_media - clase_5_media)**2
+diferencia_intensidad = diferencia_intensidad.sort_values(ascending=False)
+
+eje_pixeles = np.arange(1,785)
+plt.plot(eje_pixeles, diferencia_intensidad)
+plt.xlabel("Píxeles")
+plt.ylabel("Diferencia de intensidad media")
+plt.title("Diferencia de intensidad media de pixeles entre pez y colectivo")
+plt.axhline(0, color="black", linestyle="--")
+plt.show()
+
+# Diferencia entre pez y circulo con linea y sin negativos ordenados
+pixeles_clase3 = imagenes[imagenes["label"] == 3].drop(columns=["label"])
+clase_3_media = pixeles_clase3.mean(axis=0)
+
+pixeles_clase0 = imagenes[imagenes["label"] == 0].drop(columns=["label"])
+clase_0_media = pixeles_clase0.mean(axis=0)
+
+diferencia_intensidad = (clase_3_media - clase_0_media)**2
+diferencia_intensidad = diferencia_intensidad.sort_values(ascending=False)
+
+eje_pixeles = np.arange(1,785)
+plt.plot(eje_pixeles, diferencia_intensidad)
+plt.xlabel("Píxeles")
+plt.ylabel("Diferencia de intensidad media")
+plt.title("Diferencia de intensidad media de pixeles entre pez y circulo")
+plt.axhline(0, color="black", linestyle="--")
+plt.show()
+#UNIFICAR LAS DOS RAYAS
+
+"""
+# acordarnos de promediar todos los pixeles para asignarle un unico valor a la imagen de la diferencia,
+# asi podemos comparar en un dato cuan distintas o parecidas son las imagenes (es raro pero recomendacion de juan, a chequear)
+clase_3_resumida = clase_3_media.mean() 
+clase_5_resumida = clase_5_media.mean() 
+clase_0_resumida = clase_0_media.mean() 
+
+diferencia_resumida_3y5 = abs(clase_3_resumida - clase_5_resumida) #15.863169305031313
+diferencia_resumida_3y0 = abs(clase_3_resumida - clase_0_resumida) #1.8753571950206123
+"""
+
+
+#%%============================================================================
+#Quién es quién?
+
+matriz = np.zeros((28,28))
+
+
+
 
 #%%============================================================================
 # Diez imágenes de la clase 3
@@ -173,6 +340,8 @@ balance_sql = """
 balance_2y9 = dd.sql(balance_sql).df()
 print(balance_2y9)
 
+
+
 # clases 2 y 9 difieren de 140 imagenes, consideramos que están balanceadas
 
 #  como hay balance, usamos accuracy (2b) TP + TN  / TP + TN + FP + FN, 
@@ -204,5 +373,4 @@ pixeles = []
 knn = KNeighborsClassifier(n_neighbors=5)
 knn.fit(datos_train[pixeles], clases_train)
 predicción = knn.predict(datos_test[pixeles])
-
 

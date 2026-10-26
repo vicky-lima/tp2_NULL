@@ -8,6 +8,8 @@ import os
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, precision_score
+from sklearn.model_selection import StratifiedKFold, cross_validate
+from sklearn.tree import DecisionTreeClassifier
 
 SEMILLA = 21
 
@@ -502,4 +504,94 @@ resultados_df = pd.DataFrame(resultados, columns= ['atributos', 'cantidad atribu
 resultados_df = resultados_df.round(3)
 print(resultados_df)
 
+#%%===================================================================================
+#EJERCICIO 3
+#3a: dividimos en dev y held out
+datos = imagenes.drop(columns=["label"])
+
+clases = imagenes["label"]
+
+datos_dev, datos_held, clases_dev, clases_held = train_test_split(
+    
+    datos, clases, test_size = 0.2, random_state = SEMILLA, stratify = clases
+    )
+
+print(datos_dev.shape)
+print(datos_held.shape)
+print(imagenes.shape)
+# %%==========================================================================
+#3c: arboles de decision
+#Partimos en k fold
+cantidad_folds = 10
+particion_folds = StratifiedKFold(n_splits=cantidad_folds, shuffle=True, random_state=SEMILLA)
+'''
+#Arbol 1: gini y best
+profundidades = [2, 5, 7, 10]
+for prof in profundidades:
+    accuracy_por_fold = []
+    for indices_train, indices_test in particion_folds.split(datos_dev, clases_dev):
+
+        #volvemos a la division simplificada como en el punto 2, en cada vuelta del kfold
+        datos_train = datos_dev.iloc[indices_train]
+        clases_train = clases_dev.iloc[indices_train]
+        datos_test = datos_dev.iloc[indices_test]
+        clases_test = clases_dev.iloc[indices_test]
+
+        arbol_prueba = DecisionTreeClassifier(criterion='gini', splitter='best', max_depth=prof, random_state=SEMILLA)
+        arbol_prueba.fit(datos_train, clases_train)
+        clases_decididas = arbol_prueba.predict(datos_test)
+
+        accuracy_por_fold.append(accuracy_score(clases_test, clases_decididas))
+
+    print(f"arbol profundidad{prof}")
+    accuracy_promedio = np.mean(accuracy_por_fold)
+    print(f"accuracy promedio = {accuracy_promedio}")
+    print(f"accuracy por fold = {accuracy_por_fold}")
+'''
 #%%
+#Arbol 2: entropia
+profundidades = [2, 5, 7, 10]
+for prof in profundidades:
+    accuracy_por_fold = []
+    for indices_train, indices_test in particion_folds.split(datos_dev, clases_dev):
+
+        #volvemos a la division simplificada como en el punto 2, en cada vuelta del kfold
+        datos_train = datos_dev.iloc[indices_train]
+        clases_train = clases_dev.iloc[indices_train]
+        datos_test = datos_dev.iloc[indices_test]
+        clases_test = clases_dev.iloc[indices_test]
+
+        arbol_prueba = DecisionTreeClassifier(criterion='entropy', splitter='best', max_depth=prof, random_state=SEMILLA)
+        arbol_prueba.fit(datos_train, clases_train)
+        clases_decididas = arbol_prueba.predict(datos_test)
+
+        accuracy_por_fold.append(accuracy_score(clases_test, clases_decididas))
+
+    print(f"arbol profundidad{prof}")
+    accuracy_promedio = np.mean(accuracy_por_fold)
+    print(f"accuracy promedio = {accuracy_promedio}")
+    print(f"accuracy por fold = {accuracy_por_fold}") 
+
+#%% 
+#Arbol 3: falta cambiar lo que queramos
+profundidades = [2, 5, 7, 10]
+for prof in profundidades:
+    accuracy_por_fold = []
+    for indices_train, indices_test in particion_folds.split(datos_dev, clases_dev):
+
+        #volvemos a la division simplificada como en el punto 2, en cada vuelta del kfold
+        datos_train = datos_dev.iloc[indices_train]
+        clases_train = clases_dev.iloc[indices_train]
+        datos_test = datos_dev.iloc[indices_test]
+        clases_test = clases_dev.iloc[indices_test]
+
+        arbol_prueba = DecisionTreeClassifier(criterion='entropy', splitter='best', max_depth=prof, random_state=SEMILLA)
+        arbol_prueba.fit(datos_train, clases_train)
+        clases_decididas = arbol_prueba.predict(datos_test)
+
+        accuracy_por_fold.append(accuracy_score(clases_test, clases_decididas))
+
+    print(f"arbol profundidad{prof}")
+    accuracy_promedio = np.mean(accuracy_por_fold)
+    print(f"accuracy promedio = {accuracy_promedio}")
+    print(f"accuracy por fold = {accuracy_por_fold}")

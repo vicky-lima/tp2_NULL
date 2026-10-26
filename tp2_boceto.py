@@ -7,6 +7,7 @@ import pandas as pd
 import os
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, precision_score
 
 SEMILLA = 21
 
@@ -369,8 +370,136 @@ print(datos_train.shape)
 #%%===================================================================
 # 2d, elegimos k=5
 # PENDIENTE, ver los conjuntos de pixeles que elegimos
-pixeles = []
+clase2 = datos_train[clases_train == 2]
+clase9 = datos_train[clases_train == 9]
+
+diferencia = abs(clase2.mean() - clase9.mean())
+ranking_pixeles_dif = diferencia.sort_values(ascending=False)
+#print(ranking_pixeles_dif[:10])
+'''
+# knn con k=5 y los top 3 pixeles del ranking de diferencias
+pixeles = ranking_pixeles_dif.index[:3]
 knn = KNeighborsClassifier(n_neighbors=5)
 knn.fit(datos_train[pixeles], clases_train)
-predicción = knn.predict(datos_test[pixeles])
+prediccion = knn.predict(datos_test[pixeles])
 
+#testeamos accuracy y precision
+acc = accuracy_score(clases_test, prediccion)
+prec = precision_score(clases_test,prediccion, pos_label=2)
+
+print("del 1 al 3")
+print(acc) # 0,84
+print(prec) # 0,9
+#hay mas falsos positivos que falsos negativos
+#print(clases_test)
+#print(prediccion)
+
+
+#PROBAMOS CON OTROS PIXELES
+pixeles = ranking_pixeles_dif.index[3:6]
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(datos_train[pixeles], clases_train)
+prediccion = knn.predict(datos_test[pixeles])
+
+#testeamos accuracy y precision
+acc = accuracy_score(clases_test, prediccion)
+prec = precision_score(clases_test,prediccion, pos_label=2)
+
+print("del 3 al 6")
+print(acc) #0,85
+print(prec) #0,89
+
+
+#PROBAMOS CON OTROS PIXELES
+pixeles = ranking_pixeles_dif.index[6:9]
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(datos_train[pixeles], clases_train)
+prediccion = knn.predict(datos_test[pixeles])
+
+#testeamos accuracy y precision
+acc = accuracy_score(clases_test, prediccion)
+prec = precision_score(clases_test,prediccion, pos_label=2)
+
+print("del 6 al 9")
+print(acc) #0,51
+print(prec) #0,51
+
+
+#PROBAMOS CON OTROS PIXELES (MAS ABAJO EN EL RANKING)
+pixeles = ranking_pixeles_dif.index[100:103]
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(datos_train[pixeles], clases_train)
+prediccion = knn.predict(datos_test[pixeles])
+
+#testeamos accuracy y precision
+acc = accuracy_score(clases_test, prediccion)
+prec = precision_score(clases_test,prediccion, pos_label=2)
+
+print("del 100 al 102")
+print(acc) #0,86
+print(prec) #0,84
+
+
+#PROBAMOS CON OTROS PIXELES (ULTIMOS 3)
+pixeles = ranking_pixeles_dif.index[-3:]
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(datos_train[pixeles], clases_train)
+prediccion = knn.predict(datos_test[pixeles])
+
+#testeamos accuracy y precision
+acc = accuracy_score(clases_test, prediccion)
+prec = precision_score(clases_test,prediccion, pos_label=2)
+
+print("ultimos 3")
+print(acc) #0,51
+print(prec) #0,54
+
+
+#PROBAMOS CON OTROS PIXELES (al azar)
+pixeles = datos_train.sample(3, axis=1, random_state = SEMILLA).columns
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(datos_train[pixeles], clases_train)
+prediccion = knn.predict(datos_test[pixeles])
+
+#testeamos accuracy y precision
+acc = accuracy_score(clases_test, prediccion)
+prec = precision_score(clases_test,prediccion, pos_label=2)
+
+print("al azar")
+print(acc) #0,62
+print(prec) #0,58
+'''
+
+#EJERCICIO 2e
+ks = [2,3,4,5,10,50]
+conjuntos = {
+    'primeros 3' : ranking_pixeles_dif.index[:3],
+    'primeros 5': ranking_pixeles_dif.index[:5],
+    'primeros 9': ranking_pixeles_dif.index[:9],
+    'del 6 al 8 (elegido)': ranking_pixeles_dif.index[6:9],
+    'del 100 al 102': ranking_pixeles_dif.index[100:103],
+    
+}
+#print(conjuntos)
+
+resultados = []
+for conjunto in conjuntos.items():
+    for k in ks:
+        pixeles = conjunto[1]
+        #print(conjunto[0])
+        knn = KNeighborsClassifier(n_neighbors=k)
+        knn.fit(datos_train[pixeles], clases_train)
+        prediccion = knn.predict(datos_test[pixeles])
+        #testeamos accuracy y precision
+        #print(f"k = {k}")
+        acc = accuracy_score(clases_test, prediccion)
+        #print(f"accuracy = {acc}")
+        prec = precision_score(clases_test,prediccion, pos_label=2)
+        #print(f"precision = {prec}")
+        resultados.append((conjunto[0], len(pixeles), k, acc, prec))
+
+resultados_df = pd.DataFrame(resultados, columns= ['atributos', 'cantidad atributos', 'K', 'accuracy', 'precision'])
+resultados_df = resultados_df.round(3)
+print(resultados_df)
+
+#%%

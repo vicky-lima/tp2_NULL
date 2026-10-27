@@ -1,5 +1,6 @@
-#ANALISIS EXPLORATORIO
-
+"""
+ENCABEZADO
+"""
 import numpy as np
 import matplotlib.pyplot as plt
 import duckdb as dd
@@ -8,7 +9,7 @@ import os
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, precision_score
-from sklearn.model_selection import StratifiedKFold, cross_validate
+from sklearn.model_selection import StratifiedKFold
 from sklearn.tree import DecisionTreeClassifier
 
 SEMILLA = 21
@@ -18,8 +19,35 @@ clases = pd.read_csv(os.path.join(carpeta_principal, "clases.csv"))
 imagenes = pd.read_csv(os.path.join(carpeta_principal, "imagenes.csv"))
 evaluacion = pd.read_csv(os.path.join(carpeta_principal, "evaluacion.csv"))
 
-
 #%%=====================================================================================================
+#Ejercicio 1 - EDA
+datos = imagenes.drop(columns=['label'])
+labels = imagenes['label']
+
+print("Cantidad de imágenes", datos.shape[0])
+print("Cantidad de pixeles", datos.shape[1])
+print("Valores de píxeles: mínimo", datos.values.min(), "- máximo", datos.values.max())
+
+# Vemos el balance de todas las clases, cuántas imagenes hay de cada una, como parte del analisis exploratorio
+#Vemos el balance de las clases
+consulta_sql = """
+                SELECT label, COUNT(*) AS cantidad_dibujos
+                FROM imagenes
+                GROUP BY label
+                ORDER BY cantidad_dibujos DESC
+
+"""
+
+dataframe = dd.sql(consulta_sql).df() # SACAR INDEX
+print(dataframe)
+
+#Cada clase tiene aproximadamente la misma cantidad de dibujos: 
+#MAX = 3120(6), MIN = 2870 (5) 
+
+
+
+
+#%%======================================================================================
 #Intentamos graficar una fila = un dibujo
 # Plot imagen
 
@@ -30,12 +58,15 @@ labels = imagenes['label']
 img = np.array(copia_imagenes.iloc[8]).reshape((28,28))
 plt.imshow(img, cmap='gray')
 plt.show()
-# %%
+
+# %% ====================================================================================
+# a) 
 
 #Nos interesa ver si hay renglones en las imagenes que siempre estan vacios (columnas en el csv) 
 #Podemos hacer un mapa de color para comparar en qué pixeles se dibuja más
 #Cuidado: si hay muchas imagenes de una clase puede estar influenciado el mapa de calor generico
 
+#IMAGEN PROMEDIO EN HEATMAP
 matriz_pixeles = copia_imagenes.to_numpy(dtype=float)
 
 promedio_pixeles = matriz_pixeles.mean(axis=0)
@@ -49,26 +80,20 @@ plt.title("Mapa de calor de los píxeles")
 plt.show()
 
 
-# %%========================================================================================================
-#Vemos el balance de las clases
-consulta_sql = """
-                SELECT label, COUNT(*) AS cantidad_dibujos
-                FROM imagenes
-                GROUP BY label
-                ORDER BY cantidad_dibujos DESC
+datos = imagenes.drop(columns=['label'])
+labels = imagenes['label']
 
-"""
+#vemos desvio estandar por pixel, función std()
+desvio_por_pixel = datos.std()
+print("Pixeles con desvío 0:", (desvio_por_pixel == 0).sum(), "de", datos.shape[1])
+# No existen pixeles con desvio 0, si bien en el mapa de calor vimos a los margenes como descartables, 
+# esto es relativo dependiendo la clase
 
-dataframe = dd.sql(consulta_sql).df()
-print(dataframe)
-
-#Cada clase tiene aproximadamente la misma cantidad de dibujos: 
-#MAX = 3120(6), MIN = 2870 (5)  
 
 #%%====================================================================================================000
-#c)
-# Mapas de calor de todas las clases en una sola figura
+#b) clases parecidas
 
+# Mapas de calor de todas las clases en una sola figura
 imagenes["label"] = pd.to_numeric(imagenes["label"], errors="raise")
 
 mapas_calor = []
@@ -112,10 +137,13 @@ plt.show()
 #SIMILITUDES:
 #Cuadrado=circulo~remera (vacíos en el centro)
 #Pez=colectivo (rectangulo arriba)
+
 #OBS: 
     #mean(axis=0) → hace promedio de cada columna: promedio de cada píxel
     #mean(axis=1) → hace promedio de cada fila: promedio de cada imagen
 
+
+# LINEAS DESORDENADAS
 #Graficamos la diferencia entre la media de los pixeles de la clase 3(pez) y 5(colectivo)
 
 pixeles_clase3 = imagenes[imagenes["label"] == 3].drop(columns=["label"])
@@ -135,26 +163,6 @@ plt.axhline(0, color="black", linestyle="--")
 plt.show()
 
 
-#Graficamos la diferencia ahora con con un scatterplot
-eje_pixeles = np.arange(1, 785)
-
-plt.figure(figsize=(14, 5))
-
-plt.scatter(
-    eje_pixeles,
-    diferencia_intensidad,
-    s=10,
-    alpha=0.7
-)
-
-plt.axhline(0, color="black", linewidth=0.8, linestyle="--")
-plt.xlabel("Píxel")
-plt.ylabel("Diferencia de intensidad media (clase 3 - clase 5)")
-plt.title("Diferencia de intensidad media por píxel entre las clases 3 y 5")
-plt.xlim(1, 784)
-plt.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.show()
 
 #Graficamos cada clase con linea
 eje_pixeles = np.arange(1,785)
@@ -165,62 +173,10 @@ plt.title("Intensidad media de pixeles pez y colectivo")
 plt.axhline(0, color="black", linestyle="--")
 plt.show()
 
-#Graficamos cada clase con scatterplot
 
-#Idea: si supieramos como acceder a los pixeles que queremos podriamos hacer un grafico que en vez de poner
-#todos los pixeles en el eje x, comparemos por bloques que nos interesan
-
-eje_pixeles = np.arange(1, 785)
-
-fig, ejes = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
-
-ejes[0].scatter(
-    eje_pixeles,
-    clase_3_media,
-    s=10,
-    alpha=0.7,
-    color="blue"
-)
-ejes[0].set_title("Intensidad media por píxel - Clase 3")
-ejes[0].set_ylabel("Intensidad media")
-ejes[0].grid(True, alpha=0.3)
-
-ejes[1].scatter(
-    eje_pixeles,
-    clase_5_media,
-    s=10,
-    alpha=0.7,
-    color="red"
-)
-ejes[1].set_title("Intensidad media por píxel - Clase 5")
-ejes[1].set_xlabel("Píxel")
-ejes[1].set_ylabel("Intensidad media")
-ejes[1].grid(True, alpha=0.3)
-
-ejes[1].set_xlim(1, 784)
-
-plt.tight_layout()
-plt.show()
-
-# Graficamos cada clase con scatterplot en un mismo grafico
-plt.figure(figsize=(14,5))
-plt.scatter(
-    eje_pixeles, clase_3_media, color ="blue", label="Clase 2"
-)
-plt.scatter(
-    eje_pixeles, clase_5_media, color ="green", label="Clase 5"
-)
-
-plt.xlabel("Píxel")
-plt.ylabel("Intensidad media")
-plt.title("Intensidad media por píxel: clases 2 y 9")
-plt.xlim(1, 784)
-plt.legend()
-plt.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.show()
 
 #%% Hacemos graficos luego de las correcciones de Juan
+# CURVAS ORDENADAS Y POSITIVAS
 
 # Diferencia entre pez y colectivo con linea y sin negativos ordenados
 pixeles_clase3 = imagenes[imagenes["label"] == 3].drop(columns=["label"])
@@ -257,29 +213,15 @@ plt.ylabel("Diferencia de intensidad media")
 plt.title("Diferencia de intensidad media de pixeles entre pez y circulo")
 plt.axhline(0, color="black", linestyle="--")
 plt.show()
-#UNIFICAR LAS DOS RAYAS
 
-"""
-# acordarnos de promediar todos los pixeles para asignarle un unico valor a la imagen de la diferencia,
-# asi podemos comparar en un dato cuan distintas o parecidas son las imagenes (es raro pero recomendacion de juan, a chequear)
-clase_3_resumida = clase_3_media.mean() 
-clase_5_resumida = clase_5_media.mean() 
-clase_0_resumida = clase_0_media.mean() 
-
-diferencia_resumida_3y5 = abs(clase_3_resumida - clase_5_resumida) #15.863169305031313
-diferencia_resumida_3y0 = abs(clase_3_resumida - clase_0_resumida) #1.8753571950206123
-"""
+#UNIFICAR LAS LINEAS EN UN MISMO GRAFICO
 
 
 #%%============================================================================
-#Quién es quién?
+# 1c) dispersion dentro de una clase
 
-matriz = np.zeros((28,28))
+# IMAGENES DE MUESTRA
 
-
-
-
-#%%============================================================================
 # Diez imágenes de la clase 3
 clase3 = imagenes[imagenes["label"] == 3].drop(columns=["label"])
 
@@ -296,8 +238,8 @@ for i, ax in enumerate(ejes.flat):
 fig.suptitle("Diez imágenes de la clase 3")
 plt.tight_layout()
 plt.show()
-#%%========================================================================
-# Diez imágenes de la clase 3
+
+# Diez imágenes de la clase 0
 clase3 = imagenes[imagenes["label"] == 0].drop(columns=["label"])
 
 cantidad = min(10, len(clase3))
@@ -313,8 +255,8 @@ for i, ax in enumerate(ejes.flat):
 fig.suptitle("Diez imágenes de la clase 0")
 plt.tight_layout()
 plt.show()
-#%%==================================================
-# Diez imágenes de la clase 3
+
+# Diez imágenes de la clase 8
 clase3 = imagenes[imagenes["label"] == 8].drop(columns=["label"])
 
 cantidad = min(10, len(clase3))
@@ -329,6 +271,26 @@ for i, ax in enumerate(ejes.flat):
 
 fig.suptitle("Diez imágenes de la clase 8")
 plt.tight_layout()
+plt.show()
+
+
+# DISPERSION DE LAS CLASES CON BOXPLOT
+datos = imagenes.drop(columns=['label'])
+labels = imagenes['label']
+imagen_promedio_por_clase = datos.groupby(clases).mean()
+
+
+clases_a_comparar = [3,0,8]
+distancias_a_su_media = {}
+
+for clase in clases_a_comparar:
+    imagenes_clase = datos[labels == clase]
+    diferencias = imagenes_clase - imagen_promedio_por_clase.loc[clase]
+    distancias_a_su_media[clase] = np.sqrt((diferencias **2 ).sum(axis=1)).values
+
+plt.boxplot(distancias_a_su_media.values(), labels=[f'Clase {c}' for c in clases_a_comparar])
+plt.ylabel('Distancia  de cada imagen a la imagen promedio de su clase')
+plt.title('Dispersión dentro de cada clase')
 plt.show()
 #%%%=================================================
 # Ejercicio 2

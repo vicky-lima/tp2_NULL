@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 import duckdb as dd
 import pandas as pd
 import os
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score, precision_score
-from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import accuracy_score, precision_score 
 from sklearn.tree import DecisionTreeClassifier
+
 
 SEMILLA = 21
 
@@ -143,78 +143,33 @@ plt.show()
     #mean(axis=1) → hace promedio de cada fila: promedio de cada imagen
 
 
-# LINEAS DESORDENADAS
-#Graficamos la diferencia entre la media de los pixeles de la clase 3(pez) y 5(colectivo)
 
-pixeles_clase3 = imagenes[imagenes["label"] == 3].drop(columns=["label"])
-clase_3_media = pixeles_clase3.mean(axis=0)
+#%% =================================================================================================================
+# Graficamos las diferencias entre la media por pixel de las imágenes de pez vs colectivo y pez vs circulo
 
-pixeles_clase5 = imagenes[imagenes["label"] == 5].drop(columns=["label"])
-clase_5_media = pixeles_clase5.mean(axis=0)
+#1 calcular la diferencia para Pez (clase 3) vs Colectivo (clase 5)
+clase_3_media = imagenes[imagenes["label"] == 3].drop(columns=["label"]).mean(axis=0)
+clase_5_media = imagenes[imagenes["label"] == 5].drop(columns=["label"]).mean(axis=0)
+diferencia_colectivo = ((clase_3_media - clase_5_media)**2).sort_values(ascending=False)
 
-diferencia_intensidad = (clase_3_media - clase_5_media)
+#2 calcular la diferencia para Pez (clase 3) vs Círculo (clase 0)
+clase_0_media = imagenes[imagenes["label"] == 0].drop(columns=["label"]).mean(axis=0)
+diferencia_circulo = ((clase_3_media - clase_0_media)**2).sort_values(ascending=False)
 
-eje_pixeles = np.arange(1,785)
-plt.plot(eje_pixeles, diferencia_intensidad)
-plt.xlabel("Píxeles")
-plt.ylabel("Diferencia de intensidad media")
-plt.title("Diferencia de intensidad media de pixeles entre pez y colectivo")
-plt.axhline(0, color="black", linestyle="--")
+#3 graficar ambas curvas en la misma figura
+eje_pixeles = np.arange(1, 785)
+
+plt.figure(figsize=(10, 6))
+plt.plot(eje_pixeles, diferencia_colectivo.values, label="Pez vs Colectivo", color="dodgerblue", alpha=0.8)
+plt.plot(eje_pixeles, diferencia_circulo.values, label="Pez vs Círculo", color="crimson", alpha=0.8)
+
+
+plt.xlabel("Pixeles")
+plt.ylabel("Diferencia de intensidad media al cuadrado")
+plt.title("Comparación de diferencia de intensidad media con Pez")
+plt.axhline(0, color="black", linestyle="--", alpha=0.5)
+plt.legend() 
 plt.show()
-
-
-
-#Graficamos cada clase con linea
-eje_pixeles = np.arange(1,785)
-plt.plot(eje_pixeles, clase_5_media, clase_3_media)
-plt.xlabel("Píxeles")
-plt.ylabel("Intensidad media")
-plt.title("Intensidad media de pixeles pez y colectivo")
-plt.axhline(0, color="black", linestyle="--")
-plt.show()
-
-
-
-#%% Hacemos graficos luego de las correcciones de Juan
-# CURVAS ORDENADAS Y POSITIVAS
-
-# Diferencia entre pez y colectivo con linea y sin negativos ordenados
-pixeles_clase3 = imagenes[imagenes["label"] == 3].drop(columns=["label"])
-clase_3_media = pixeles_clase3.mean(axis=0)
-
-pixeles_clase5 = imagenes[imagenes["label"] == 5].drop(columns=["label"])
-clase_5_media = pixeles_clase5.mean(axis=0)
-
-diferencia_intensidad = (clase_3_media - clase_5_media)**2
-diferencia_intensidad = diferencia_intensidad.sort_values(ascending=False)
-
-eje_pixeles = np.arange(1,785)
-plt.plot(eje_pixeles, diferencia_intensidad)
-plt.xlabel("Píxeles")
-plt.ylabel("Diferencia de intensidad media")
-plt.title("Diferencia de intensidad media de pixeles entre pez y colectivo")
-plt.axhline(0, color="black", linestyle="--")
-plt.show()
-
-# Diferencia entre pez y circulo con linea y sin negativos ordenados
-pixeles_clase3 = imagenes[imagenes["label"] == 3].drop(columns=["label"])
-clase_3_media = pixeles_clase3.mean(axis=0)
-
-pixeles_clase0 = imagenes[imagenes["label"] == 0].drop(columns=["label"])
-clase_0_media = pixeles_clase0.mean(axis=0)
-
-diferencia_intensidad = (clase_3_media - clase_0_media)**2
-diferencia_intensidad = diferencia_intensidad.sort_values(ascending=False)
-
-eje_pixeles = np.arange(1,785)
-plt.plot(eje_pixeles, diferencia_intensidad)
-plt.xlabel("Píxeles")
-plt.ylabel("Diferencia de intensidad media")
-plt.title("Diferencia de intensidad media de pixeles entre pez y circulo")
-plt.axhline(0, color="black", linestyle="--")
-plt.show()
-
-#UNIFICAR LAS LINEAS EN UN MISMO GRAFICO
 
 
 #%%============================================================================
@@ -277,7 +232,7 @@ plt.show()
 # DISPERSION DE LAS CLASES CON BOXPLOT
 datos = imagenes.drop(columns=['label'])
 labels = imagenes['label']
-imagen_promedio_por_clase = datos.groupby(clases).mean()
+imagen_promedio_por_clase = datos.groupby(labels).mean()
 
 
 clases_a_comparar = [3,0,8]
@@ -292,7 +247,7 @@ plt.boxplot(distancias_a_su_media.values(), labels=[f'Clase {c}' for c in clases
 plt.ylabel('Distancia  de cada imagen a la imagen promedio de su clase')
 plt.title('Dispersión dentro de cada clase')
 plt.show()
-#%%%=================================================
+#%%%===========================================================================================================
 # Ejercicio 2
 
 clase2y9 = imagenes[(imagenes["label"] == 2) | (imagenes["label"] == 9)]
@@ -315,7 +270,7 @@ print(balance_2y9)
 # creemos que es más grave FP, que diga que es un cuadrado y sea una casa
 # (que tenga un triangulo arriba del cuadrado y no lo vea), PRECISION alto
 
-#%%===================================================================
+#%%==============================================================================================================================
 # 2c) separar en conjunto de entrenamiento - testeo
 # para evitar que quede toda una clase en uno de los conjuntos, separamos las clases en distintos dfs
 # y sacamos cierta proporción de cada una al azar, luego unimos todo y obtenemos los conjuntos que vamos a usar
@@ -331,109 +286,73 @@ datos_train, datos_test, clases_train, clases_test = train_test_split(
 
 print(datos_train.shape)
 
-#%%===================================================================
-# 2d, elegimos k=5
-# PENDIENTE, ver los conjuntos de pixeles que elegimos
+#%%======================================================================================================================================
+# 2d), elegimos k=5
+
 clase2 = datos_train[clases_train == 2]
 clase9 = datos_train[clases_train == 9]
 
 diferencia = abs(clase2.mean() - clase9.mean())
 ranking_pixeles_dif = diferencia.sort_values(ascending=False)
 #print(ranking_pixeles_dif[:10])
-'''
-# knn con k=5 y los top 3 pixeles del ranking de diferencias
-pixeles = ranking_pixeles_dif.index[:3]
-knn = KNeighborsClassifier(n_neighbors=5)
-knn.fit(datos_train[pixeles], clases_train)
-prediccion = knn.predict(datos_test[pixeles])
-
-#testeamos accuracy y precision
-acc = accuracy_score(clases_test, prediccion)
-prec = precision_score(clases_test,prediccion, pos_label=2)
-
-print("del 1 al 3")
-print(acc) # 0,84
-print(prec) # 0,9
-#hay mas falsos positivos que falsos negativos
-#print(clases_test)
-#print(prediccion)
 
 
-#PROBAMOS CON OTROS PIXELES
-pixeles = ranking_pixeles_dif.index[3:6]
-knn = KNeighborsClassifier(n_neighbors=5)
-knn.fit(datos_train[pixeles], clases_train)
-prediccion = knn.predict(datos_test[pixeles])
+conjuntos_2_pix = {
+    'del 1 al 2' : ranking_pixeles_dif.index[:2],
+    'del 2 al 4': ranking_pixeles_dif.index[2:4],
+    'del 4 al 6': ranking_pixeles_dif.index[4:6],
+    'del 100 al 102': ranking_pixeles_dif.index[100:102],
+    'últimos 2': ranking_pixeles_dif.index[-2:],
+    '2 random': datos_train.sample(2, axis=1, random_state = SEMILLA).columns
+}
 
-#testeamos accuracy y precision
-acc = accuracy_score(clases_test, prediccion)
-prec = precision_score(clases_test,prediccion, pos_label=2)
-
-print("del 3 al 6")
-print(acc) #0,85
-print(prec) #0,89
-
-
-#PROBAMOS CON OTROS PIXELES
-pixeles = ranking_pixeles_dif.index[6:9]
-knn = KNeighborsClassifier(n_neighbors=5)
-knn.fit(datos_train[pixeles], clases_train)
-prediccion = knn.predict(datos_test[pixeles])
-
-#testeamos accuracy y precision
-acc = accuracy_score(clases_test, prediccion)
-prec = precision_score(clases_test,prediccion, pos_label=2)
-
-print("del 6 al 9")
-print(acc) #0,51
-print(prec) #0,51
+conjuntos_3_pix = {
+    'del 1 al 3' : ranking_pixeles_dif.index[:3],
+    'del 3 al 6': ranking_pixeles_dif.index[3:6],
+    'del 6 al 8': ranking_pixeles_dif.index[6:9],
+    'del 100 al 103': ranking_pixeles_dif.index[100:103],
+    'últimos 3': ranking_pixeles_dif.index[-3:],
+    '3 random': datos_train.sample(3, axis=1, random_state = SEMILLA).columns
+}
 
 
-#PROBAMOS CON OTROS PIXELES (MAS ABAJO EN EL RANKING)
-pixeles = ranking_pixeles_dif.index[100:103]
-knn = KNeighborsClassifier(n_neighbors=5)
-knn.fit(datos_train[pixeles], clases_train)
-prediccion = knn.predict(datos_test[pixeles])
+conjuntos_5_pix = {
+    'del 1 al 5' : ranking_pixeles_dif.index[:5],
+    'del 5 al 10': ranking_pixeles_dif.index[5:10],
+    'del 10 al 15': ranking_pixeles_dif.index[10:15],
+    'del 100 al 105': ranking_pixeles_dif.index[100:105],
+    'últimos 5': ranking_pixeles_dif.index[-5:],
+    '5 random': datos_train.sample(5, axis=1, random_state = SEMILLA).columns
+}
 
-#testeamos accuracy y precision
-acc = accuracy_score(clases_test, prediccion)
-prec = precision_score(clases_test,prediccion, pos_label=2)
+diccionarios =[conjuntos_2_pix, conjuntos_3_pix,  conjuntos_5_pix]
 
-print("del 100 al 102")
-print(acc) #0,86
-print(prec) #0,84
+resultados = []
+for diccionario in diccionarios:
 
-
-#PROBAMOS CON OTROS PIXELES (ULTIMOS 3)
-pixeles = ranking_pixeles_dif.index[-3:]
-knn = KNeighborsClassifier(n_neighbors=5)
-knn.fit(datos_train[pixeles], clases_train)
-prediccion = knn.predict(datos_test[pixeles])
-
-#testeamos accuracy y precision
-acc = accuracy_score(clases_test, prediccion)
-prec = precision_score(clases_test,prediccion, pos_label=2)
-
-print("ultimos 3")
-print(acc) #0,51
-print(prec) #0,54
+    for conjunto in diccionario.items():
+        
+        pixeles = conjunto[1]
+        #print(conjunto[0])
+        knn = KNeighborsClassifier(n_neighbors=5)
+        knn.fit(datos_train[pixeles], clases_train)
+        prediccion = knn.predict(datos_test[pixeles])
+        #testeamos accuracy y precision
+        #print(f"k = {k}")
+        acc = accuracy_score(clases_test, prediccion)
+        #print(f"accuracy = {acc}")
+        prec = precision_score(clases_test,prediccion, pos_label=2)
+        #print(f"precision = {prec}")
+        resultados.append((conjunto[0], len(pixeles), acc, prec))
 
 
-#PROBAMOS CON OTROS PIXELES (al azar)
-pixeles = datos_train.sample(3, axis=1, random_state = SEMILLA).columns
-knn = KNeighborsClassifier(n_neighbors=5)
-knn.fit(datos_train[pixeles], clases_train)
-prediccion = knn.predict(datos_test[pixeles])
+resultados_df = pd.DataFrame(resultados, columns= ['atributos', 'cantidad atributos', 'accuracy', 'precision'])
+resultados_df = resultados_df.round(3)
+print(resultados_df)
 
-#testeamos accuracy y precision
-acc = accuracy_score(clases_test, prediccion)
-prec = precision_score(clases_test,prediccion, pos_label=2)
 
-print("al azar")
-print(acc) #0,62
-print(prec) #0,58
-'''
 
+#%%#======================================================================================================
 #EJERCICIO 2e
 ks = [2,3,4,5,10,50]
 conjuntos = {
@@ -468,7 +387,7 @@ print(resultados_df)
 
 #%%===================================================================================
 #EJERCICIO 3
-#3a: dividimos en dev y held out
+#3a): dividimos en dev y held out
 datos = imagenes.drop(columns=["label"])
 
 clases = imagenes["label"]
@@ -481,12 +400,15 @@ datos_dev, datos_held, clases_dev, clases_held = train_test_split(
 print(datos_dev.shape)
 print(datos_held.shape)
 print(imagenes.shape)
+
+#3b) matriz docs
+
 # %%==========================================================================
-#3c: arboles de decision
+#3c): arboles de decision
 #Partimos en k fold
 cantidad_folds = 10
 particion_folds = StratifiedKFold(n_splits=cantidad_folds, shuffle=True, random_state=SEMILLA)
-'''
+"""
 #Arbol 1: gini y best
 profundidades = [2, 5, 7, 10]
 for prof in profundidades:
@@ -509,12 +431,15 @@ for prof in profundidades:
     accuracy_promedio = np.mean(accuracy_por_fold)
     print(f"accuracy promedio = {accuracy_promedio}")
     print(f"accuracy por fold = {accuracy_por_fold}")
-'''
-#%%
-#Arbol 2: entropia
+"""
+#%%=====================================================================================
+#Arbol 2: entropia ELEGIDO! :)
+"""
 profundidades = [2, 5, 7, 10]
 for prof in profundidades:
     accuracy_por_fold = []
+
+    # A continuacion variamos el fold que probamos vs entrenamos:
     for indices_train, indices_test in particion_folds.split(datos_dev, clases_dev):
 
         #volvemos a la division simplificada como en el punto 2, en cada vuelta del kfold
@@ -533,9 +458,11 @@ for prof in profundidades:
     accuracy_promedio = np.mean(accuracy_por_fold)
     print(f"accuracy promedio = {accuracy_promedio}")
     print(f"accuracy por fold = {accuracy_por_fold}") 
+"""
 
-#%% 
+#%% ================================================================================================
 #Arbol 3: falta cambiar lo que queramos
+"""
 profundidades = [2, 5, 7, 10]
 for prof in profundidades:
     accuracy_por_fold = []
@@ -547,7 +474,7 @@ for prof in profundidades:
         datos_test = datos_dev.iloc[indices_test]
         clases_test = clases_dev.iloc[indices_test]
 
-        arbol_prueba = DecisionTreeClassifier(criterion='entropy', splitter='best', max_depth=prof, random_state=SEMILLA)
+        arbol_prueba = DecisionTreeClassifier(criterion='gini', splitter='best', max_depth=prof, random_state=SEMILLA, min_samples_leaf=5)
         arbol_prueba.fit(datos_train, clases_train)
         clases_decididas = arbol_prueba.predict(datos_test)
 
@@ -557,3 +484,33 @@ for prof in profundidades:
     accuracy_promedio = np.mean(accuracy_por_fold)
     print(f"accuracy promedio = {accuracy_promedio}")
     print(f"accuracy por fold = {accuracy_por_fold}")
+
+"""
+
+    #%%#=======================================================================================
+#3 d) Nuestro mejor arbol es el de prof 10
+
+
+arbol_final = DecisionTreeClassifier(criterion='entropy', splitter='best', max_depth=10, random_state=SEMILLA)
+
+#lo entreno con todo el conjunto de desarrollo (dev):
+arbol_final.fit(datos_dev, clases_dev) 
+
+#lo testeo con los datos que NUNCA toqué (held-out)
+clases_decididas = arbol_final.predict(datos_held) #devuelve una lista con las clases predecidas de cada imagen
+
+#calculamos la accuracy para el held
+accuracy_arbol_final = accuracy_score(clases_held, clases_decididas)
+print(clases_decididas, accuracy_arbol_final)
+
+# La accuracy de nuestro arbol final, medida con el held out nos dio 0,792333...
+
+#%%#===============================================================================================
+# 3) e) NOS FALTA RUNNEARLO...MAÑANA CHEQUEAMOS EN CLASE
+
+# La accuracy esperada para predecir el conjunto de evaluacion de la catedra es 0,792333...
+# Ya que a este punto, entreno con el mismo conjunto de datos, y entre el heldout y la evaluacion, no hay ningun entrenamiento adicional
+ 
+#clases_decididas = arbol_final.predict(evaluacion)
+
+    #%%#=======================================================================================================

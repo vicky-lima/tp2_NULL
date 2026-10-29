@@ -351,7 +351,121 @@ print("\nComparación modelos KNN predicción clase 2 y 9")
 print(comparacion_modelos_2y9_df)
 
 #%%============================================================================================================
+#Ejercicio 3 - Clasificación multiclase
+# 3a): dividimos en dev y held out
+datos = imagenes.drop(columns=["label"])
+clases = imagenes["label"]
+
+datos_dev, datos_held, clases_dev, clases_held = train_test_split(
+    
+    datos, clases, test_size = 0.2, random_state = SEMILLA, stratify = clases
+    )
 
 #%%============================================================================================================
+# 3c): arboles de decision
+# Partimos en k fold
+cantidad_folds = 10
+particion_folds = StratifiedKFold(n_splits=cantidad_folds, shuffle=True, random_state=SEMILLA)
+
+profundidades = [2, 5, 7, 10]
+'''
+#Arbol 1: gini y best
+
+for prof in profundidades:
+    accuracy_por_fold = []
+    for indices_train, indices_test in particion_folds.split(datos_dev, clases_dev):
+
+        #volvemos a la division simplificada como en el punto 2, en cada vuelta del kfold
+        datos_train = datos_dev.iloc[indices_train]
+        clases_train = clases_dev.iloc[indices_train]
+        datos_test = datos_dev.iloc[indices_test]
+        clases_test = clases_dev.iloc[indices_test]
+
+        arbol_prueba = DecisionTreeClassifier(criterion='gini', splitter='best', max_depth=prof, random_state=SEMILLA)
+        arbol_prueba.fit(datos_train, clases_train)
+        clases_decididas = arbol_prueba.predict(datos_test)
+
+        accuracy_por_fold.append(accuracy_score(clases_test, clases_decididas))
+
+    print(f"arbol profundidad{prof}")
+    accuracy_promedio = np.mean(accuracy_por_fold)
+    print(f"accuracy promedio = {accuracy_promedio}")
+    print(f"accuracy por fold = {accuracy_por_fold}")
+
+#Arbol 2: entropia ELEGIDO!
+
+for prof in profundidades:
+    accuracy_por_fold = []
+
+    # A continuacion variamos el fold que probamos vs entrenamos:
+    for indices_train, indices_test in particion_folds.split(datos_dev, clases_dev):
+
+        #volvemos a la division simplificada como en el punto 2, en cada vuelta del kfold
+        datos_train = datos_dev.iloc[indices_train]
+        clases_train = clases_dev.iloc[indices_train]
+        datos_test = datos_dev.iloc[indices_test]
+        clases_test = clases_dev.iloc[indices_test]
+
+        arbol_prueba = DecisionTreeClassifier(criterion='entropy', splitter='best', max_depth=prof, random_state=SEMILLA)
+        arbol_prueba.fit(datos_train, clases_train)
+        clases_decididas = arbol_prueba.predict(datos_test)
+
+        accuracy_por_fold.append(accuracy_score(clases_test, clases_decididas))
+
+    print(f"arbol profundidad{prof}")
+    accuracy_promedio = np.mean(accuracy_por_fold)
+    print(f"accuracy promedio = {accuracy_promedio}")
+    print(f"accuracy por fold = {accuracy_por_fold}") 
+
+#Arbol 3: gini, min_samples_leaf = 5
+
+for prof in profundidades:
+    accuracy_por_fold = []
+    for indices_train, indices_test in particion_folds.split(datos_dev, clases_dev):
+
+        #volvemos a la division simplificada como en el punto 2, en cada vuelta del kfold
+        datos_train = datos_dev.iloc[indices_train]
+        clases_train = clases_dev.iloc[indices_train]
+        datos_test = datos_dev.iloc[indices_test]
+        clases_test = clases_dev.iloc[indices_test]
+
+        arbol_prueba = DecisionTreeClassifier(criterion='gini', splitter='best', max_depth=prof, random_state=SEMILLA, min_samples_leaf=5)
+        arbol_prueba.fit(datos_train, clases_train)
+        clases_decididas = arbol_prueba.predict(datos_test)
+
+        accuracy_por_fold.append(accuracy_score(clases_test, clases_decididas))
+
+    print(f"arbol profundidad{prof}")
+    accuracy_promedio = np.mean(accuracy_por_fold)
+    print(f"accuracy promedio = {accuracy_promedio}")
+    print(f"accuracy por fold = {accuracy_por_fold}")
+'''
+
 #%%============================================================================================================
+# 3d) Nuestro mejor arbol es el de prof 10 con entropia
+
+arbol_final = DecisionTreeClassifier(criterion='entropy', splitter='best', max_depth=10, random_state=SEMILLA)
+
+#lo entrenamos con todo el conjunto de desarrollo (dev):
+arbol_final.fit(datos_dev, clases_dev) 
+
+#lo testeamos con los datos que NUNCA tocamos (held-out)
+clases_decididas = arbol_final.predict(datos_held) #devuelve una lista con las clases predecidas de cada imagen
+
+#calculamos la accuracy para el held
+accuracy_arbol_final = accuracy_score(clases_held, clases_decididas)
+print(clases_decididas, accuracy_arbol_final)
+
+# La accuracy de nuestro arbol final, medida con el held out nos dio 0,792333...
+
+#%%============================================================================================================
+# 3e) NOS FALTA RUNNEARLO...MAÑANA CHEQUEAMOS EN CLASE
+
+# La accuracy esperada para predecir el conjunto de evaluacion de la catedra es 0,792333...
+# Ya que a este punto, entreno con el mismo conjunto de datos, y entre el heldout y la evaluacion, no hay ningun entrenamiento adicional
+ 
+evaluacion_ids = evaluacion['id']
+evaluacion_datos = evaluacion.drop(columns='id')
+clases_decididas = arbol_final.predict(evaluacion_datos)
+
 #%%============================================================================================================

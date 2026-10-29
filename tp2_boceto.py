@@ -493,7 +493,7 @@ for prof in profundidades:
 """
 
 #%% ================================================================================================
-#Arbol 3: falta cambiar lo que queramos
+#Arbol 3: gini, min_samples_leaf = 5
 """
 profundidades = [2, 5, 7, 10]
 for prof in profundidades:

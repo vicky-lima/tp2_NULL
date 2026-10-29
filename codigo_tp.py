@@ -218,6 +218,7 @@ print(balance_2y9)
 # (que tenga un triangulo arriba del cuadrado y no lo vea), PRECISION alto
 #%%============================================================================================================
 #2c) separar en conjuntos de train y test
+# stratify separa balanceando las clases (no hay riesgo de tener todas las imagenes de una clase en solo uno de los dos conjuntos)
 datos_2y9 = imagenes_clases_2y9.drop(columns=["label"])
 
 clases_2y9 = imagenes_clases_2y9["label"]
@@ -352,7 +353,8 @@ print(comparacion_modelos_2y9_df)
 
 #%%============================================================================================================
 #Ejercicio 3 - Clasificación multiclase
-# 3a): dividimos en dev y held out
+# 3a) Separar en conjuntos de desarrollo y control
+# dividimos en dev y held out
 datos = imagenes.drop(columns=["label"])
 clases = imagenes["label"]
 
@@ -362,7 +364,10 @@ datos_dev, datos_held, clases_dev, clases_held = train_test_split(
     )
 
 #%%============================================================================================================
-# 3c): arboles de decision
+# 3c) comparar y seleccionar árboles de decisión con distintos hiperparámetros, 
+# incluyendo distintas profundidades (limitarse a profundidades entre 1 y 10)
+# usando k-fold
+
 # Partimos en k fold
 cantidad_folds = 10
 particion_folds = StratifiedKFold(n_splits=cantidad_folds, shuffle=True, random_state=SEMILLA)
@@ -442,7 +447,8 @@ for prof in profundidades:
 '''
 
 #%%============================================================================================================
-# 3d) Nuestro mejor arbol es el de prof 10 con entropia
+# 3d) Entrenar el modelo elegido
+# Nuestro mejor arbol es el de prof 10 con entropia
 
 arbol_final = DecisionTreeClassifier(criterion='entropy', splitter='best', max_depth=10, random_state=SEMILLA)
 
@@ -454,18 +460,26 @@ clases_decididas = arbol_final.predict(datos_held) #devuelve una lista con las c
 
 #calculamos la accuracy para el held
 accuracy_arbol_final = accuracy_score(clases_held, clases_decididas)
-print(clases_decididas, accuracy_arbol_final)
+
+print(f"accuracy arbol final: {round(accuracy_arbol_final, 4)}")
 
 # La accuracy de nuestro arbol final, medida con el held out nos dio 0,792333...
 
 #%%============================================================================================================
-# 3e) NOS FALTA RUNNEARLO...MAÑANA CHEQUEAMOS EN CLASE
+# 3e) Estimación de desempeño
+# NOS FALTA RUNNEARLO...MAÑANA CHEQUEAMOS EN CLASE
 
 # La accuracy esperada para predecir el conjunto de evaluacion de la catedra es 0,792333...
 # Ya que a este punto, entreno con el mismo conjunto de datos, y entre el heldout y la evaluacion, no hay ningun entrenamiento adicional
- 
-evaluacion_ids = evaluacion['id']
-evaluacion_datos = evaluacion.drop(columns='id')
+
+'''
+evaluacion_ids = evaluacion["id"]
+evaluacion_datos = evaluacion.drop(columns=["id"])
 clases_decididas = arbol_final.predict(evaluacion_datos)
 
+predicciones_evaluacion_df = pd.DataFrame({"id": evaluacion_ids, "label": clases_decididas)
+predicciones_evaluacion_df.to_csv(
+    os.path.join(carpeta_principal, "TP-02-0.7923-NULL.csv"),
+    index=False
+)'''
 #%%============================================================================================================

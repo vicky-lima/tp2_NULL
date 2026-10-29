@@ -3,6 +3,8 @@ ENCABEZADO
 """
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+from matplotlib.patches import Patch
 import duckdb as dd
 import pandas as pd
 import os
@@ -291,7 +293,7 @@ clase9 = datos_train[clases_train == 9]
 
 diferencia = abs(clase2.mean() - clase9.mean())
 ranking_pixeles_dif = diferencia.sort_values(ascending=False)
-#print(ranking_pixeles_dif[:10])
+print(ranking_pixeles_dif[:10])
 
 
 conjuntos_2_pix = {
@@ -353,17 +355,30 @@ print(resultados_df)
 
 matriz = np.zeros((28,28))
 
-for pixel in conjuntos_3_pix[‘del 1 al 3’]:
-	fila_pixel = pixel // 28
-	columna_pixel = pixel % 28
-	matriz[fila_pixel][columna_pixel] = 1
+for pixel in conjuntos_3_pix['del 1 al 3']:
+    pixel_numero = int(pixel.replace('pixel', ''))
+    fila_pixel = pixel_numero // 28
+    columna_pixel = pixel_numero % 28
+    matriz[fila_pixel][columna_pixel] = 1
 
-for pixel in conjuntos_3_pix[‘del 6 al 8’]:
-	fila_pixel = pixel // 28
-	columna_pixel = pixel % 28
-	matriz[fila_pixel][columna_pixel] = 2
+for pixel in conjuntos_3_pix['del 6 al 8']:
+    pixel_numero = int(pixel.replace('pixel', ''))
+    fila_pixel = pixel_numero // 28
+    columna_pixel = pixel_numero % 28
+    matriz[fila_pixel][columna_pixel] = 2
 
 print(matriz)
+colores = ListedColormap(['whitesmoke', 'red', 'royalblue'])
+plt.figure(figsize=(6,6))
+plt.imshow(matriz, cmap=colores, vmin=-0.5, vmax=2.5, interpolation='nearest')
+plt.legend(handles=[Patch(color='red', label= 'Puestos del 1 al 3'),
+                    Patch(color='royalblue', label= 'Puestos del 6 al 8')],
+                    loc='upper center', bbox_to_anchor=(0.5, -0.08), ncol=2
+                    )
+plt.ylabel('Fila')
+plt.xlabel('Columna')
+plt.title('Ubicación de los píxeles elegidos en la imagen de 28x28')
+plt.show()
 
 
 
@@ -526,6 +541,8 @@ print(clases_decididas, accuracy_arbol_final)
 # La accuracy esperada para predecir el conjunto de evaluacion de la catedra es 0,792333...
 # Ya que a este punto, entreno con el mismo conjunto de datos, y entre el heldout y la evaluacion, no hay ningun entrenamiento adicional
  
-#clases_decididas = arbol_final.predict(evaluacion)
+evaluacion_ids = evaluacion['id']
+evaluacion_datos = evaluacion.drop(columns='id')
+clases_decididas = arbol_final.predict(evaluacion_datos)
 
     #%%#=======================================================================================================

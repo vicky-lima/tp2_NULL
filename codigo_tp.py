@@ -5,11 +5,13 @@
  ejercicios de elección, entrenamiento y desempeño del modelo de predicción de clases.
 '''
 
-import numpy as np
-import matplotlib.pyplot as plt
 import duckdb as dd
 import pandas as pd
+import numpy as np
 import os
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+from matplotlib.patches import Patch
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, precision_score 
@@ -120,8 +122,8 @@ fig.suptitle("Mapas de calor por clase")
 plt.show()
 
 #SIMILITUDES:
-#Cuadrado=circulo~remera (vacíos en el centro)
-#Pez=colectivo (rectangulo arriba)
+#Cuadrado~circulo~remera (vacíos en el centro)
+#Pez~colectivo (rectangulo arriba)
 
 #%%============================================================================================================
 # Graficamos las diferencias entre la media por pixel de las imágenes de pez vs colectivo y pez vs circulo
@@ -152,7 +154,7 @@ plt.show()
 
 #%%============================================================================================================
 # 1c) dispersion dentro de una clase
-
+#falta dispersion por clase
 # IMAGENES DE MUESTRA
 
 # Diez imágenes de las clases 0, 3, 8
@@ -191,5 +193,25 @@ plt.title('Dispersión dentro de cada clase')
 plt.show()
 
 #%%============================================================================================================
+#Ejercicio 2 - Clasificación binaria
+#Cuadrado vs casa
+clase2y9 = imagenes[(imagenes["label"] == 2) | (imagenes["label"] == 9)]
 
+balance_sql = """
+                SELECT label, COUNT(*) AS cantidad
+                FROM clase2y9
+                GROUP BY label
+                """
+balance_2y9 = dd.sql(balance_sql).df()
+print(balance_2y9)
+
+
+
+# clases 2 y 9 difieren de 140 imagenes, consideramos que están balanceadas
+
+# como hay balance, usamos accuracy (2b) TP + TN  / TP + TN + FP + FN, 
+#justificar en el docs por que elegimos esa
+# positivo: clase 2 (cuadrado), negativo: clase 9 (casa)
+# creemos que es más grave FP, que diga que es un cuadrado y sea una casa
+# (que tenga un triangulo arriba del cuadrado y no lo vea), PRECISION alto
 #%%============================================================================================================

@@ -24,9 +24,9 @@ evaluacion = pd.read_csv(os.path.join(carpeta_principal, "evaluacion.csv"))
 datos = imagenes.drop(columns=['label'])
 labels = imagenes['label']
 
-print("Cantidad de imágenes", datos.shape[0])
-print("Cantidad de pixeles", datos.shape[1])
-print("Valores de píxeles: mínimo", datos.values.min(), "- máximo", datos.values.max())
+print("Cantidad de imágenes", imagenes.shape[0])
+print("Cantidad de pixeles", imagenes.shape[1])
+print("Valores de píxeles: mínimo", imagenes.values.min(), "- máximo", imagenes.values.max())
 
 # Vemos el balance de todas las clases, cuántas imagenes hay de cada una, como parte del analisis exploratorio
 #Vemos el balance de las clases
@@ -43,9 +43,6 @@ print(dataframe)
 
 #Cada clase tiene aproximadamente la misma cantidad de dibujos: 
 #MAX = 3120(6), MIN = 2870 (5) 
-
-
-
 
 #%%======================================================================================
 #Intentamos graficar una fila = un dibujo

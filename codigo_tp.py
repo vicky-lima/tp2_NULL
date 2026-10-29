@@ -395,7 +395,7 @@ for prof in profundidades:
     
     accuracy_promedio = np.mean(accuracy_por_fold)
     arbol.append(accuracy_promedio)
-resultados.append(arbol)
+resultados_arboles.append(arbol)
 
 #Arbol 2: entropia ELEGIDO!
 arbol = ["entropia"]
@@ -419,7 +419,7 @@ for prof in profundidades:
 
     accuracy_promedio = np.mean(accuracy_por_fold)
     arbol.append(accuracy_promedio)
-resultados.append(arbol)
+resultados_arboles.append(arbol)
 
 #Arbol 3: gini, min_samples_leaf = 5
 arbol = ["gini con min_samples_leaf"]
@@ -441,7 +441,7 @@ for prof in profundidades:
 
     accuracy_promedio = np.mean(accuracy_por_fold)
     arbol.append(accuracy_promedio)
-resultados.append(arbol)
+resultados_arboles.append(arbol)
 
 #Arbol 4: entropia, min_samples_leaf = 5
 arbol = ["entropia con min_samples_leaf"]
@@ -463,10 +463,10 @@ for prof in profundidades:
 
     accuracy_promedio = np.mean(accuracy_por_fold)
     arbol.append(accuracy_promedio)
-resultados.append(arbol)
+resultados_arboles.append(arbol)
 
-resultados_arboles_df = pd.DataFrame(resultados, columns= ['hiperparametros', 'prof 2', 'prof 5', 'prof 7', 'prof 10'])
-resultados_arboles_df = resultados_2y9_df.round(4)
+resultados_arboles_df = pd.DataFrame(resultados_arboles, columns= ['hiperparametros', 'prof 2', 'prof 5', 'prof 7', 'prof 10'])
+resultados_arboles_df = resultados_arboles_df.round(4)
 print("\nResultados accuracy clasificación con arboles binarios")
 print(resultados_arboles_df)
 

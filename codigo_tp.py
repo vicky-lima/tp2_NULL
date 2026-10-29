@@ -14,7 +14,7 @@ from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score, precision_score 
+from sklearn.metrics import accuracy_score, precision_score, confusion_matrix
 from sklearn.tree import DecisionTreeClassifier
 
 SEMILLA = 21
@@ -158,24 +158,22 @@ plt.show()
 #falta dispersion por clase
 # IMAGENES DE MUESTRA
 
-# Diez imágenes de las clases 0, 3, 8
-clases_muestra = [0, 3, 8]
-for c in clases_muestra:
-    clase = imagenes[imagenes["label"] == c].drop(columns=["label"])
+# Diez imágenes de la clase 3
+clase = imagenes[imagenes["label"] == 3].drop(columns=["label"])
 
-    cantidad = min(10, len(clase))
-    fig, ejes = plt.subplots(2, 5, figsize=(10, 5))
+cantidad = min(10, len(clase))
+fig, ejes = plt.subplots(2, 5, figsize=(10, 5))
 
-    for i, ax in enumerate(ejes.flat):
-        if i < cantidad:
-            img = clase.iloc[i].to_numpy(dtype=float).reshape((28, 28))
-            ax.imshow(img, cmap="gray")
-            ax.set_title(f"Imagen {i + 1}")
-        ax.axis("off")
+for i, ax in enumerate(ejes.flat):
+    if i < cantidad:
+        img = clase.iloc[i].to_numpy(dtype=float).reshape((28, 28))
+        ax.imshow(img, cmap="gray")
+        ax.set_title(f"Imagen {i + 1}")
+    ax.axis("off")
 
-    fig.suptitle(f"Diez imágenes de la clase {c}")
-    plt.tight_layout()
-    plt.show()
+fig.suptitle(f"Diez imágenes de la clase 3")
+plt.tight_layout()
+plt.show()
 
 # DISPERSION DE LAS CLASES CON BOXPLOT
 imagen_promedio_por_clase = pix_imagenes.groupby(labels).mean()
@@ -203,6 +201,7 @@ cant_imagenes_clases_2y9_sql = """
                 SELECT label, COUNT(*) AS cantidad
                 FROM imagenes_clases_2y9
                 GROUP BY label
+                ORDER BY label
                 """
 balance_2y9 = dd.sql(cant_imagenes_clases_2y9_sql).df()
 
@@ -373,10 +372,12 @@ cantidad_folds = 10
 particion_folds = StratifiedKFold(n_splits=cantidad_folds, shuffle=True, random_state=SEMILLA)
 
 profundidades = [2, 5, 7, 10]
-'''
-#Arbol 1: gini y best
+resultados_arboles = []
 
+#Arbol 1: gini y best
+arbol = ["gini"]
 for prof in profundidades:
+    
     accuracy_por_fold = []
     for indices_train, indices_test in particion_folds.split(datos_dev, clases_dev):
 
@@ -391,14 +392,13 @@ for prof in profundidades:
         clases_decididas = arbol_prueba.predict(datos_test)
 
         accuracy_por_fold.append(accuracy_score(clases_test, clases_decididas))
-
-    print(f"arbol profundidad{prof}")
+    
     accuracy_promedio = np.mean(accuracy_por_fold)
-    print(f"accuracy promedio = {accuracy_promedio}")
-    print(f"accuracy por fold = {accuracy_por_fold}")
+    arbol.append(accuracy_promedio)
+resultados.append(arbol)
 
 #Arbol 2: entropia ELEGIDO!
-
+arbol = ["entropia"]
 for prof in profundidades:
     accuracy_por_fold = []
 
@@ -417,13 +417,12 @@ for prof in profundidades:
 
         accuracy_por_fold.append(accuracy_score(clases_test, clases_decididas))
 
-    print(f"arbol profundidad{prof}")
     accuracy_promedio = np.mean(accuracy_por_fold)
-    print(f"accuracy promedio = {accuracy_promedio}")
-    print(f"accuracy por fold = {accuracy_por_fold}") 
+    arbol.append(accuracy_promedio)
+resultados.append(arbol)
 
 #Arbol 3: gini, min_samples_leaf = 5
-
+arbol = ["gini con min_samples_leaf"]
 for prof in profundidades:
     accuracy_por_fold = []
     for indices_train, indices_test in particion_folds.split(datos_dev, clases_dev):
@@ -440,11 +439,61 @@ for prof in profundidades:
 
         accuracy_por_fold.append(accuracy_score(clases_test, clases_decididas))
 
-    print(f"arbol profundidad{prof}")
     accuracy_promedio = np.mean(accuracy_por_fold)
-    print(f"accuracy promedio = {accuracy_promedio}")
-    print(f"accuracy por fold = {accuracy_por_fold}")
-'''
+    arbol.append(accuracy_promedio)
+resultados.append(arbol)
+
+#Arbol 4: entropia, min_samples_leaf = 5
+arbol = ["entropia con min_samples_leaf"]
+for prof in profundidades:
+    accuracy_por_fold = []
+    for indices_train, indices_test in particion_folds.split(datos_dev, clases_dev):
+
+        #volvemos a la division simplificada como en el punto 2, en cada vuelta del kfold
+        datos_train = datos_dev.iloc[indices_train]
+        clases_train = clases_dev.iloc[indices_train]
+        datos_test = datos_dev.iloc[indices_test]
+        clases_test = clases_dev.iloc[indices_test]
+
+        arbol_prueba = DecisionTreeClassifier(criterion='entropy', splitter='best', max_depth=prof, random_state=SEMILLA, min_samples_leaf=5)
+        arbol_prueba.fit(datos_train, clases_train)
+        clases_decididas = arbol_prueba.predict(datos_test)
+
+        accuracy_por_fold.append(accuracy_score(clases_test, clases_decididas))
+
+    accuracy_promedio = np.mean(accuracy_por_fold)
+    arbol.append(accuracy_promedio)
+resultados.append(arbol)
+
+resultados_arboles_df = pd.DataFrame(resultados, columns= ['hiperparametros', 'prof 2', 'prof 5', 'prof 7', 'prof 10'])
+resultados_arboles_df = resultados_2y9_df.round(4)
+print("\nResultados accuracy clasificación con arboles binarios")
+print(resultados_arboles_df)
+
+
+#%%============================================================================================================
+# Matriz de confusion del árbol elegido con el conjunto de entrenamiento
+
+arbol_prueba = DecisionTreeClassifier(criterion='entropy', splitter='best', max_depth=10, random_state=SEMILLA)
+predicciones_fold = []
+clases_test_fold = []
+
+for indices_train, indices_test in particion_folds.split(datos_dev, clases_dev):
+
+    #volvemos a la division simplificada como en el punto 2, en cada vuelta del kfold
+    datos_train = datos_dev.iloc[indices_train]
+    clases_train = clases_dev.iloc[indices_train]
+    datos_test = datos_dev.iloc[indices_test]
+    clases_test = clases_dev.iloc[indices_test]
+
+    arbol_prueba.fit(datos_train, clases_train)
+    clases_decididas = arbol_prueba.predict(datos_test)
+    predicciones_fold += list(clases_decididas)
+    clases_test_fold += list(clases_test)
+
+matriz_de_confusion = confusion_matrix(clases_test_fold , predicciones_fold)
+print("\nMatriz de confusión de los datos de entrenamiento")
+print(matriz_de_confusion)
 
 #%%============================================================================================================
 # 3d) Entrenar el modelo elegido

@@ -46,6 +46,7 @@ cantidad_imagenes_por_clase_sql = """
 """
 
 cant_imagenes_por_clase_df = dd.sql(cantidad_imagenes_por_clase_sql).df() # SACAR INDEX
+print("\nCantidad de imagenes de cada clase")
 print(cant_imagenes_por_clase_df)
 #%%============================================================================================================
 #Plot imagen aleatoria (elegimos el 8 porque si)
@@ -195,23 +196,162 @@ plt.show()
 #%%============================================================================================================
 #Ejercicio 2 - Clasificación binaria
 #Cuadrado vs casa
-clase2y9 = imagenes[(imagenes["label"] == 2) | (imagenes["label"] == 9)]
+#2a) nuevo dataframe solo con las imagenes de las clases 2 y 9
+imagenes_clases_2y9 = imagenes[(imagenes["label"] == 2) | (imagenes["label"] == 9)]
 
-balance_sql = """
+cant_imagenes_clases_2y9_sql = """
                 SELECT label, COUNT(*) AS cantidad
-                FROM clase2y9
+                FROM imagenes_clases_2y9
                 GROUP BY label
                 """
-balance_2y9 = dd.sql(balance_sql).df()
+balance_2y9 = dd.sql(cant_imagenes_clases_2y9_sql).df()
+
+print("\nCantidad de imagenes clases 2 y 9")
 print(balance_2y9)
-
-
 
 # clases 2 y 9 difieren de 140 imagenes, consideramos que están balanceadas
 
 # como hay balance, usamos accuracy (2b) TP + TN  / TP + TN + FP + FN, 
-#justificar en el docs por que elegimos esa
+
 # positivo: clase 2 (cuadrado), negativo: clase 9 (casa)
 # creemos que es más grave FP, que diga que es un cuadrado y sea una casa
 # (que tenga un triangulo arriba del cuadrado y no lo vea), PRECISION alto
+#%%============================================================================================================
+#2c) separar en conjuntos de train y test
+datos_2y9 = imagenes_clases_2y9.drop(columns=["label"])
+
+clases_2y9 = imagenes_clases_2y9["label"]
+
+datos_2y9_train, datos_2y9_test, clases_2y9_train, clases_2y9_test = train_test_split(
+    
+    datos_2y9, clases_2y9, test_size = 0.2, random_state = SEMILLA, stratify = clases_2y9
+    )
+
+#%%============================================================================================================
+# 2d) Ajustar un modelo de KNN. Elegimos k=5
+
+clase2 = datos_2y9_train[clases_2y9_train == 2]
+clase9 = datos_2y9_train[clases_2y9_train == 9]
+
+diferencia_media_por_pixel = abs(clase2.mean() - clase9.mean())
+ranking_pixeles_dif = diferencia_media_por_pixel.sort_values(ascending=False)
+print("\nRanking de la diferencia de la media por píxeles")
+print(ranking_pixeles_dif[:10])
+
+#Armamos conjuntos de x cantidad de pixeles variando los pixeles elegidos del ranking
+
+conjuntos_2_pix = {
+    'del 1 al 2' : ranking_pixeles_dif.index[:2],
+    'del 2 al 4': ranking_pixeles_dif.index[2:4],
+    'del 4 al 6': ranking_pixeles_dif.index[4:6],
+    'del 100 al 102': ranking_pixeles_dif.index[100:102],
+    'últimos 2': ranking_pixeles_dif.index[-2:],
+    '2 random': datos_2y9_train.sample(2, axis=1, random_state = SEMILLA).columns
+}
+
+conjuntos_3_pix = {
+    'del 1 al 3' : ranking_pixeles_dif.index[:3],
+    'del 3 al 6': ranking_pixeles_dif.index[3:6],
+    'del 6 al 8': ranking_pixeles_dif.index[6:9],
+    'del 100 al 103': ranking_pixeles_dif.index[100:103],
+    'últimos 3': ranking_pixeles_dif.index[-3:],
+    '3 random': datos_2y9_train.sample(3, axis=1, random_state = SEMILLA).columns
+}
+
+conjuntos_5_pix = {
+    'del 1 al 5' : ranking_pixeles_dif.index[:5],
+    'del 5 al 10': ranking_pixeles_dif.index[5:10],
+    'del 10 al 15': ranking_pixeles_dif.index[10:15],
+    'del 100 al 105': ranking_pixeles_dif.index[100:105],
+    'últimos 5': ranking_pixeles_dif.index[-5:],
+    '5 random': datos_2y9_train.sample(5, axis=1, random_state = SEMILLA).columns
+}
+
+diccionarios_conj =[conjuntos_2_pix, conjuntos_3_pix,  conjuntos_5_pix]
+
+resultados = []
+for diccionario in diccionarios_conj:
+
+    for conjunto in diccionario.items():
+        
+        pixeles = conjunto[1]
+        knn = KNeighborsClassifier(n_neighbors=5)
+        knn.fit(datos_2y9_train[pixeles], clases_2y9_train)
+        prediccion = knn.predict(datos_2y9_test[pixeles])
+        #testeamos accuracy y precision
+        acc = accuracy_score(clases_2y9_test, prediccion)
+        prec = precision_score(clases_2y9_test,prediccion, pos_label=2)
+        resultados.append((conjunto[0], len(pixeles), acc, prec))
+
+
+resultados_2y9_df = pd.DataFrame(resultados, columns= ['atributos', 'cantidad atributos', 'accuracy', 'precision'])
+resultados_2y9_df = resultados_2y9_df.round(3)
+print("\nResultados predicción clase 2 y 9 con KNN, k = 5")
+print(resultados_2y9_df)
+
+# PLOT PIXELES MEJORES RESULTADOS
+# Identificamos a los pixeles candidatos en una grilla de 28x28 que simula la imagen.
+# Ponemos un 1 en los del grupo ‘1 a 3’ y un 2 en los del grupo ‘6 a 9’
+
+matriz = np.zeros((28,28))
+
+for pixel in conjuntos_3_pix['del 1 al 3']:
+    pixel_numero = int(pixel.replace('pixel', ''))
+    fila_pixel = pixel_numero // 28
+    columna_pixel = pixel_numero % 28
+    matriz[fila_pixel][columna_pixel] = 1
+
+for pixel in conjuntos_3_pix['del 6 al 8']:
+    pixel_numero = int(pixel.replace('pixel', ''))
+    fila_pixel = pixel_numero // 28
+    columna_pixel = pixel_numero % 28
+    matriz[fila_pixel][columna_pixel] = 2
+
+
+colores = ListedColormap(['whitesmoke', 'red', 'royalblue'])
+plt.figure(figsize=(6,6))
+plt.imshow(matriz, cmap=colores, vmin=-0.5, vmax=2.5, interpolation='nearest')
+plt.legend(handles=[Patch(color='red', label= 'Puestos del 1 al 3'),
+                    Patch(color='royalblue', label= 'Puestos del 6 al 8')],
+                    loc='upper center', bbox_to_anchor=(0.5, -0.08), ncol=2
+                    )
+plt.ylabel('Fila')
+plt.xlabel('Columna')
+plt.title('Ubicación de los píxeles elegidos en la imagen de 28x28')
+plt.show()
+
+
+#%%============================================================================================================
+# 2e) comparar modelos de KNN usando distintos atributos y distintos valores de k
+
+ks = [2,3,4,5,10,50]
+conjuntos = {
+    'primeros 3' : ranking_pixeles_dif.index[:3],
+    'primeros 5': ranking_pixeles_dif.index[:5],
+    'primeros 9': ranking_pixeles_dif.index[:9],
+    'del 6 al 8 (elegido)': ranking_pixeles_dif.index[6:9],
+    'del 100 al 102': ranking_pixeles_dif.index[100:103],
+}
+
+resultados = []
+for conjunto in conjuntos.items():
+    for k in ks:
+        pixeles = conjunto[1]
+        knn = KNeighborsClassifier(n_neighbors=k)
+        knn.fit(datos_2y9_train[pixeles], clases_2y9_train)
+        prediccion = knn.predict(datos_2y9_test[pixeles])
+        #testeamos accuracy y precision
+        acc = accuracy_score(clases_2y9_test, prediccion)
+        prec = precision_score(clases_2y9_test,prediccion, pos_label=2)
+        resultados.append((conjunto[0], len(pixeles), k, acc, prec))
+
+comparacion_modelos_2y9_df = pd.DataFrame(resultados, columns= ['atributos', 'cantidad atributos', 'K', 'accuracy', 'precision'])
+comparacion_modelos_2y9_df = comparacion_modelos_2y9_df.round(3)
+print("\nComparación modelos KNN predicción clase 2 y 9")
+print(comparacion_modelos_2y9_df)
+
+#%%============================================================================================================
+
+#%%============================================================================================================
+#%%============================================================================================================
 #%%============================================================================================================

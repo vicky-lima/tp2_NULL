@@ -348,6 +348,24 @@ resultados_df = resultados_df.round(3)
 print(resultados_df)
 
 
+# Identificamos a los pixeles candidatos en una grilla de 28x28 que simula la imagen.
+# Ponemos un 1 en los del grupo ‘1 a 3’ y un 2 en los del grupo ‘6 a 9’
+
+matriz = np.zeros((28,28))
+
+for pixel in conjuntos_3_pix[‘del 1 al 3’]:
+	fila_pixel = pixel // 28
+	columna_pixel = pixel % 28
+	matriz[fila_pixel][columna_pixel] = 1
+
+for pixel in conjuntos_3_pix[‘del 6 al 8’]:
+	fila_pixel = pixel // 28
+	columna_pixel = pixel % 28
+	matriz[fila_pixel][columna_pixel] = 2
+
+print(matriz)
+
+
 
 #%%#======================================================================================================
 #EJERCICIO 2e

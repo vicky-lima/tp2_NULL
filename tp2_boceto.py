@@ -293,7 +293,9 @@ clase9 = datos_train[clases_train == 9]
 
 diferencia = abs(clase2.mean() - clase9.mean())
 ranking_pixeles_dif = diferencia.sort_values(ascending=False)
+print("\nPrimeras 10 líneas del ranking de píxeles")
 print(ranking_pixeles_dif[:10])
+
 
 
 conjuntos_2_pix = {

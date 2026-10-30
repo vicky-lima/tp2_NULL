@@ -347,6 +347,7 @@ for conjunto in conjuntos.items():
 
 comparacion_modelos_2y9_df = pd.DataFrame(resultados, columns= ['atributos', 'cantidad atributos', 'K', 'accuracy', 'precision'])
 comparacion_modelos_2y9_df = comparacion_modelos_2y9_df.round(3)
+comparacion_modelos_2y9_df = comparacion_modelos_2y9_df.sort_values(by=['accuracy', 'precision'], ascending=False).reset_index(drop=True)
 print("\nComparación modelos KNN predicción clase 2 y 9")
 print(comparacion_modelos_2y9_df)
 

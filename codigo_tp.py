@@ -526,7 +526,7 @@ evaluacion_ids = evaluacion["id"]
 evaluacion_datos = evaluacion.drop(columns=["id"])
 clases_decididas = arbol_final.predict(evaluacion_datos)
 
-predicciones_evaluacion_df = pd.DataFrame({"id": evaluacion_ids, "label": clases_decididas)
+predicciones_evaluacion_df = pd.DataFrame({"id": evaluacion_ids, "label": clases_decididas})
 predicciones_evaluacion_df.to_csv(
     os.path.join(carpeta_principal, "TP-02-0.7923-NULL.csv"),
     index=False

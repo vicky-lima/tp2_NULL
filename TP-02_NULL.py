@@ -28,20 +28,24 @@ evaluacion = pd.read_csv(os.path.join(carpeta_principal, "evaluacion.csv"))
 
 #%%============================================================================================================
 #Ejercicio 1 - Análisis exploratorio de los datos
-#separamos las clases, de los pixeles
+# Separamos las clases, de los pixeles
 pix_imagenes = imagenes.drop(columns=['label'])
 labels = imagenes['label']
-#vemos cuántas imagenes hay, cuántos píxeles tiene cada imágen y el rango de intensidades de los píxeles
+
+# Vemos cuántas imagenes hay, los tipos de datos, cuántos píxeles tiene cada imágen y el rango de intensidades de los píxeles
 print("Cantidad de imágenes", imagenes.shape[0])
 print("Cantidad de pixeles", pix_imagenes.shape[1])
 print("Valores de píxeles: mínimo", pix_imagenes.values.min(), "- máximo", pix_imagenes.values.max())
+print("Tipos de datos:", pix_imagenes.dtypes.unique())
+print("Valores faltantes:", imagenes.isna().sum().sum())
 
-#Vemos cuántas imagenes hay de cada clase
-#Vemos si las clases están balanceadas
+# Vemos cuántas imagenes hay de cada clase y si las clases están balanceadas
 cantidad_imagenes_por_clase_sql = """
-                SELECT label, COUNT(*) AS cantidad_dibujos
-                FROM imagenes
-                GROUP BY label
+                SELECT c.label, c.nombre AS objeto, COUNT(*) AS cantidad_dibujos
+                FROM imagenes AS i
+                INNER JOIN clases AS c
+                ON i.label = c.label
+                GROUP BY c.label, c.nombre
                 ORDER BY cantidad_dibujos DESC
 """
 

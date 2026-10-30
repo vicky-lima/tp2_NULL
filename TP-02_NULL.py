@@ -45,9 +45,10 @@ cantidad_imagenes_por_clase_sql = """
                 ORDER BY cantidad_dibujos DESC
 """
 
-cant_imagenes_por_clase_df = dd.sql(cantidad_imagenes_por_clase_sql).df() # SACAR INDEX
+cant_imagenes_por_clase_df = dd.sql(cantidad_imagenes_por_clase_sql).df()
 print("\nCantidad de imagenes de cada clase")
-print(cant_imagenes_por_clase_df)
+print(cant_imagenes_por_clase_df.to_string(index=False))
+
 #%%============================================================================================================
 #Plot imagen aleatoria (elegimos el 8 porque si)
 img = np.array(pix_imagenes.iloc[8]).reshape((28,28))
@@ -72,17 +73,12 @@ plt.colorbar(label="Intensidad promedio")
 plt.title("Mapa de calor de los píxeles")
 plt.show()
 
-#se puede ver que los bordes tienen intensidad baja
+# Se puede ver que los bordes tienen intensidad baja
 
-# Como la media puede estar influenciada por valores extremos, vemos desvio estandar por pixel, función std()
-desvio_est_por_pixel = pix_imagenes.std()
-print("Pixeles con desvío 0:", (desvio_est_por_pixel == 0).sum(), "de", pix_imagenes.shape[1])
-# El desvio estandar igual a cero evalua si ese pixel tiene la misma intensidad en todas las imagenes
-# No existen pixeles con desvio 0, por lo tanto no podemos descartar los bordes de las imagenes
 #%%============================================================================================================
 #1b) clases parecidas
 
-# Plot mapas de calor de todas las clases en una sola figura
+# Generamos los mapas de calor de cada clase en una sola figura
 labels = pd.to_numeric(labels, errors="raise")
 
 mapas_calor = []
@@ -242,8 +238,8 @@ print(ranking_pixeles_dif[:10])
 
 conjuntos_2_pix = {
     'del 1 al 2' : ranking_pixeles_dif.index[:2],
-    'del 2 al 4': ranking_pixeles_dif.index[2:4],
-    'del 4 al 6': ranking_pixeles_dif.index[4:6],
+    'del 3 al 4': ranking_pixeles_dif.index[2:4],
+    'del 5 al 6': ranking_pixeles_dif.index[4:6],
     'del 100 al 102': ranking_pixeles_dif.index[100:102],
     'últimos 2': ranking_pixeles_dif.index[-2:],
     '2 random': datos_2y9_train.sample(2, axis=1, random_state = SEMILLA).columns
@@ -291,7 +287,7 @@ print(resultados_2y9_df)
 
 # PLOT PIXELES MEJORES RESULTADOS
 # Identificamos a los pixeles candidatos en una grilla de 28x28 que simula la imagen.
-# Ponemos un 1 en los del grupo ‘1 a 3’ y un 2 en los del grupo ‘6 a 9’
+# Ponemos un 1 en los del grupo ‘1 a 3’ y un 2 en los del grupo ‘6 a 8’
 
 matriz = np.zeros((28,28))
 

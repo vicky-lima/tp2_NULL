@@ -1,6 +1,6 @@
 '''
  Grupo: "NULL"
- Integralentes: Lucía Murillo, Victoria Florencia Lima, María Cecilia Marchesano y Emma Victoria Tripaldi
+ Integrantes: Lucía Murillo, Victoria Florencia Lima, María Cecilia Marchesano y Emma Victoria Tripaldi
  Archivo con el código del analisis exploratorio de los datos proporcionados por la materia, junto con los
  ejercicios de elección, entrenamiento y desempeño del modelo de predicción de clases.
 '''
@@ -373,7 +373,7 @@ particion_folds = StratifiedKFold(n_splits=cantidad_folds, shuffle=True, random_
 
 profundidades = [2, 5, 7, 10]
 resultados_arboles = []
-
+'''
 #Arbol 1: gini y best
 arbol = ["gini"]
 for prof in profundidades:
@@ -469,7 +469,7 @@ resultados_arboles_df = pd.DataFrame(resultados_arboles, columns= ['hiperparamet
 resultados_arboles_df = resultados_arboles_df.round(4)
 print("\nResultados accuracy clasificación con arboles binarios")
 print(resultados_arboles_df)
-
+'''
 
 #%%============================================================================================================
 # Matriz de confusion del árbol elegido con el conjunto de entrenamiento

@@ -517,12 +517,10 @@ print(f"accuracy arbol final: {round(accuracy_arbol_final, 4)}")
 
 #%%============================================================================================================
 # 3e) Estimación de desempeño
-# NOS FALTA RUNNEARLO...MAÑANA CHEQUEAMOS EN CLASE
 
 # La accuracy esperada para predecir el conjunto de evaluacion de la catedra es 0,792333...
 # Ya que a este punto, entreno con el mismo conjunto de datos, y entre el heldout y la evaluacion, no hay ningun entrenamiento adicional
 
-'''
 evaluacion_ids = evaluacion["id"]
 evaluacion_datos = evaluacion.drop(columns=["id"])
 clases_decididas = arbol_final.predict(evaluacion_datos)
@@ -531,5 +529,5 @@ predicciones_evaluacion_df = pd.DataFrame({"id": evaluacion_ids, "label": clases
 predicciones_evaluacion_df.to_csv(
     os.path.join(carpeta_principal, "TP-02-0.7923-NULL.csv"),
     index=False
-)'''
+)
 #%%============================================================================================================

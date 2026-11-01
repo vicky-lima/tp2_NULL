@@ -8,5 +8,4 @@ Para correr el archivo TP-02_NULL.py es necesario tener instaladas las librerias
 - matplotlib
 - scikit learn 
 
-Para que el codigo funcione hay que correr todas las celdas juntas
-Dejamos comentado el codigo que genera el dataframe comparando los modelos de arboles para disminuir el tiempo de ejecución
+Para que el codigo funcione hay que correr las celdas de los import y la lectura de los archivos primero

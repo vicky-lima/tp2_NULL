@@ -55,6 +55,8 @@ print(cant_imagenes_por_clase_df.to_string(index=False))
 
 #%%============================================================================================================
 #Plot imagen aleatoria (elegimos el 8 porque si)
+pix_imagenes = imagenes.drop(columns=['label'])
+labels = imagenes['label']
 img = np.array(pix_imagenes.iloc[8]).reshape((28,28))
 plt.imshow(img, cmap='gray')
 plt.show()
@@ -64,6 +66,8 @@ plt.show()
 # Nos interesa ver si hay renglones en las imagenes que siempre estan vacios (columnas en el csv) 
 # Hacemos un mapa de calor para comparar en qué pixeles se dibuja más (según la media por pixel)
 # Cuidado: si hay muchas imagenes de una clase puede estar influenciado el mapa de calor generico (pero sabemos que están balanceadas)
+pix_imagenes = imagenes.drop(columns=['label'])
+labels = imagenes['label']
 
 matriz_pixeles = pix_imagenes.to_numpy(dtype=float)
 
@@ -74,7 +78,7 @@ mapa_calor = media_pixeles.reshape((28, 28))
 plt.figure(figsize=(8, 6))
 plt.imshow(mapa_calor, cmap="inferno")
 plt.colorbar(label="Intensidad promedio")
-plt.title("Mapa de calor de los píxeles")
+plt.title("Mapa de calor de los pixeles")
 plt.show()
 
 # Se puede ver que los bordes tienen intensidad baja
@@ -143,12 +147,12 @@ eje_pixeles = np.arange(1, 785)
 
 plt.figure(figsize=(10, 6))
 plt.plot(eje_pixeles, diferencia_colectivo.values, label="Pez vs Colectivo", color="dodgerblue", alpha=0.8)
-plt.plot(eje_pixeles, diferencia_circulo.values, label="Pez vs Círculo", color="crimson", alpha=0.8)
+plt.plot(eje_pixeles, diferencia_circulo.values, label="Pez vs Circulo", color="crimson", alpha=0.8)
 
 
 plt.xlabel("Pixeles")
 plt.ylabel("Diferencia de intensidad media al cuadrado")
-plt.title("Comparación de diferencia de intensidad media con Pez")
+plt.title("Comparacion de diferencia de intensidad media con Pez")
 plt.axhline(0, color="black", linestyle="--", alpha=0.5)
 plt.legend() 
 plt.show()
@@ -157,6 +161,8 @@ plt.show()
 # 1c) dispersion dentro de una clase
 #falta dispersion por clase
 # IMAGENES DE MUESTRA
+pix_imagenes = imagenes.drop(columns=['label'])
+labels = imagenes['label']
 
 # Diez imágenes de la clase 3
 clase = imagenes[imagenes["label"] == 3].drop(columns=["label"])
@@ -171,7 +177,7 @@ for i, ax in enumerate(ejes.flat):
         ax.set_title(f"Imagen {i + 1}")
     ax.axis("off")
 
-fig.suptitle(f"Diez imágenes de la clase 3")
+fig.suptitle(f"Diez imagenes de la clase 3")
 plt.tight_layout()
 plt.show()
 
@@ -188,7 +194,7 @@ for clase in clases_a_comparar:
 
 plt.boxplot(distancias_a_su_media.values(), tick_labels=[f"Clase {c}" for c in clases_a_comparar])
 plt.ylabel('Distancia  de cada imagen a la imagen promedio de su clase')
-plt.title('Dispersión dentro de cada clase')
+plt.title('Dispersion dentro de cada clase')
 plt.show()
 
 #%%============================================================================================================
@@ -235,7 +241,7 @@ clase9 = datos_2y9_train[clases_2y9_train == 9]
 
 diferencia_media_por_pixel = abs(clase2.mean() - clase9.mean())
 ranking_pixeles_dif = diferencia_media_por_pixel.sort_values(ascending=False)
-print("\nRanking de la diferencia de la media por píxeles")
+print("\nRanking de la diferencia de la media por pixeles")
 print(ranking_pixeles_dif[:10])
 
 #Armamos conjuntos de x cantidad de pixeles variando los pixeles elegidos del ranking
@@ -245,7 +251,7 @@ conjuntos_2_pix = {
     'del 3 al 4': ranking_pixeles_dif.index[2:4],
     'del 5 al 6': ranking_pixeles_dif.index[4:6],
     'del 100 al 102': ranking_pixeles_dif.index[100:102],
-    'últimos 2': ranking_pixeles_dif.index[-2:],
+    'ultimos 2': ranking_pixeles_dif.index[-2:],
     '2 random': datos_2y9_train.sample(2, axis=1, random_state = SEMILLA).columns
 }
 
@@ -254,7 +260,7 @@ conjuntos_3_pix = {
     'del 3 al 6': ranking_pixeles_dif.index[3:6],
     'del 6 al 8': ranking_pixeles_dif.index[6:9],
     'del 100 al 103': ranking_pixeles_dif.index[100:103],
-    'últimos 3': ranking_pixeles_dif.index[-3:],
+    'ultimos 3': ranking_pixeles_dif.index[-3:],
     '3 random': datos_2y9_train.sample(3, axis=1, random_state = SEMILLA).columns
 }
 
@@ -263,7 +269,7 @@ conjuntos_5_pix = {
     'del 5 al 10': ranking_pixeles_dif.index[5:10],
     'del 10 al 15': ranking_pixeles_dif.index[10:15],
     'del 100 al 105': ranking_pixeles_dif.index[100:105],
-    'últimos 5': ranking_pixeles_dif.index[-5:],
+    'ultimos 5': ranking_pixeles_dif.index[-5:],
     '5 random': datos_2y9_train.sample(5, axis=1, random_state = SEMILLA).columns
 }
 
@@ -286,7 +292,8 @@ for diccionario in diccionarios_conj:
 
 resultados_2y9_df = pd.DataFrame(resultados, columns= ['atributos', 'cantidad atributos', 'accuracy', 'precision'])
 resultados_2y9_df = resultados_2y9_df.round(3)
-print("\nResultados predicción clase 2 y 9 con KNN, k = 5")
+resultados_2y9_df = resultados_2y9_df.sort_values(by=['accuracy', 'precision'], ascending=False).reset_index(drop=True)
+print("\nResultados prediccion clase 2 y 9 con KNN, k = 5")
 print(resultados_2y9_df)
 
 # PLOT PIXELES MEJORES RESULTADOS
@@ -317,7 +324,7 @@ plt.legend(handles=[Patch(color='red', label= 'Puestos del 1 al 3'),
                     )
 plt.ylabel('Fila')
 plt.xlabel('Columna')
-plt.title('Ubicación de los píxeles elegidos en la imagen de 28x28')
+plt.title('Ubicacion de los pixeles elegidos en la imagen de 28x28')
 plt.show()
 
 
@@ -348,7 +355,7 @@ for conjunto in conjuntos.items():
 comparacion_modelos_2y9_df = pd.DataFrame(resultados, columns= ['atributos', 'cantidad atributos', 'K', 'accuracy', 'precision'])
 comparacion_modelos_2y9_df = comparacion_modelos_2y9_df.round(3)
 comparacion_modelos_2y9_df = comparacion_modelos_2y9_df.sort_values(by=['accuracy', 'precision'], ascending=False).reset_index(drop=True)
-print("\nComparación modelos KNN predicción clase 2 y 9")
+print("\nComparacion modelos KNN prediccion clase 2 y 9")
 print(comparacion_modelos_2y9_df)
 
 #%%============================================================================================================
@@ -374,7 +381,7 @@ particion_folds = StratifiedKFold(n_splits=cantidad_folds, shuffle=True, random_
 
 profundidades = [2, 5, 7, 10]
 resultados_arboles = []
-'''
+
 #Arbol 1: gini y best
 arbol = ["gini"]
 for prof in profundidades:
@@ -468,9 +475,9 @@ resultados_arboles.append(arbol)
 
 resultados_arboles_df = pd.DataFrame(resultados_arboles, columns= ['hiperparametros', 'prof 2', 'prof 5', 'prof 7', 'prof 10'])
 resultados_arboles_df = resultados_arboles_df.round(4)
-print("\nResultados accuracy clasificación con arboles binarios")
+print("\nResultados accuracy clasificacion con arboles binarios")
 print(resultados_arboles_df)
-'''
+
 
 #%%============================================================================================================
 # Matriz de confusion del árbol elegido con el conjunto de entrenamiento
@@ -493,7 +500,7 @@ for indices_train, indices_test in particion_folds.split(datos_dev, clases_dev):
     clases_test_fold += list(clases_test)
 
 matriz_de_confusion = confusion_matrix(clases_test_fold , predicciones_fold)
-print("\nMatriz de confusión de los datos de entrenamiento")
+print("\nMatriz de confusion de los datos de entrenamiento")
 print(matriz_de_confusion)
 
 #%%============================================================================================================
@@ -529,5 +536,5 @@ predicciones_evaluacion_df = pd.DataFrame({"id": evaluacion_ids, "label": clases
 predicciones_evaluacion_df.to_csv(
     os.path.join(carpeta_principal, "TP-02-0.7923-NULL.csv"),
     index=False
-)
+) 
 #%%============================================================================================================
